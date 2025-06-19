@@ -146,5 +146,5 @@ async Task RunMongoScript() // Fixed: Made async
     // To delete data (commented out as it would delete right after seeding)
     //await DatabaseSeedRunner.DeleteMongoDataAsync();
     // With custom connection string (commented out to avoid duplicate seeding)
-    // await DatabaseSeedRunner.RunMongoSeedAsync("mongodb://localhost:27017", "SeniorLearnBulletin");
+    // await DatabaseSeedRunner.RunMongoSeedAsync("mongodb://localhost:27021", "SeniorLearnBulletin");
 }
