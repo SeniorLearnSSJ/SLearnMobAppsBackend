@@ -1,0 +1,1088 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SeniorLearnApi</name>
+    </assembly>
+    <members>
+        <member name="T:SeniorLearnApi.Controllers.AuthController">
+            <summary>
+            Handles authentication operations for the SeniorLearn bulletin system
+            </summary>
+            <remarks>
+            Provides endpoints for user registration, sign-in, token refresh, and sign-out functionality.
+            Supports JWT-based authentication with refresh token mechanism for secure access.
+            </remarks>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.AuthController.Register(SeniorLearnApi.DTOs.Requests.RegisterRequest)">
+            <summary>
+            Registers a new user account
+            </summary>
+            <param name="request">User registration details including username, email, password, and personal information</param>
+            <returns>Authentication response with access token and user role information</returns>
+            <response code="201">User successfully registered and authenticated</response>
+            <response code="400">Invalid request data or validation errors</response>
+            <response code="409">Username or email already exists</response>
+            <example>
+            POST /api/auth/register
+            {
+              "username": "johnsmith",
+              "email": "john.smith@email.com",
+              "password": "SecurePassword123!",
+              "firstName": "John",
+              "lastName": "Smith"
+            }
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.AuthController.SignIn(SeniorLearnApi.DTOs.Requests.SignInRequest)">
+            <summary>
+            Authenticates a user with username and password
+            </summary>
+            <param name="request">Sign-in credentials containing username and password</param>
+            <returns>Authentication response with access token, refresh token, and user role</returns>
+            <response code="200">Successfully authenticated</response>
+            <response code="400">Invalid request format</response>
+            <response code="401">Invalid username or password</response>
+            <example>
+            POST /api/auth/sign-in
+            {
+              "username": "Peter",
+              "password": "user123"
+            }
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.AuthController.RefreshToken(SeniorLearnApi.DTOs.Requests.RefreshTokenRequest)">
+            <summary>
+            Refreshes an expired access token using a valid refresh token
+            </summary>
+            <param name="request">Refresh token request containing the current refresh token</param>
+            <returns>New authentication response with fresh access token and refresh token</returns>
+            <response code="200">Token successfully refreshed</response>
+            <response code="400">Invalid request format</response>
+            <response code="401">Invalid or expired refresh token</response>
+            <example>
+            POST /api/auth/refresh-token
+            {
+              "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.AuthController.SignOut(SeniorLearnApi.DTOs.Requests.SignOutRequest)">
+            <summary>
+            Signs out a user by revoking their refresh token
+            </summary>
+            <param name="request">Sign-out request containing the refresh token to revoke</param>
+            <returns>Confirmation of successful sign-out</returns>
+            <response code="200">Successfully signed out</response>
+            <response code="400">Invalid refresh token or token does not belong to user</response>
+            <response code="401">User not authenticated or unable to identify current user</response>
+            <example>
+            POST /api/auth/sign-out
+            {
+              "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+            </example>
+        </member>
+        <member name="T:SeniorLearnApi.Controllers.MemberBulletinController">
+            <summary>
+            Manages member-created bulletins categorized as Interests, Events, or Updates
+            </summary>
+            <remarks>
+            Provides full CRUD operations for member bulletins. Members can create, view, update, and delete their own bulletins.
+            Administrators have additional permissions to moderate any member bulletin. All endpoints require authentication.
+            Supports filtering by category and user ID for flexible bulletin browsing.
+            </remarks>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.MemberBulletinController.GetAllMemberBulletins(System.Nullable{SeniorLearnApi.Enums.MemberBulletinCategory},System.String)">
+            <summary>
+            Retrieves member bulletins with optional filtering by category and user
+            </summary>
+            <param name="category">Optional filter by bulletin category (Interests, Events, or Updates)</param>
+            <param name="userId">Optional filter by specific user ID to show bulletins from that user only</param>
+            <returns>List of member bulletins matching the specified filters, sorted by creation date (newest first)</returns>
+            <response code="200">Bulletins successfully retrieved</response>
+            <response code="401">User not authenticated</response>
+            <example>
+            GET /api/bulletins/member
+            GET /api/bulletins/member?category=Event=
+            GET /api/bulletins/member?userId=64a7b8c9d1234567890abcde
+            GET /api/bulletins/member?category=Interest&amp;userId=64a7b8c9d1234567890abcde
+            Authorization: Bearer {jwt-token}
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.MemberBulletinController.GetMemberBulletinById(System.String)">
+            <summary>
+            Retrieves a specific member bulletin by its ID
+            </summary>
+            <param name="id">The unique identifier of the member bulletin</param>
+            <returns>Complete member bulletin details including title, content, author, category, and timestamps</returns>
+            <response code="200">Bulletin successfully retrieved</response>
+            <response code="401">User not authenticated</response>
+            <response code="404">Bulletin not found or invalid ID format</response>
+            <example>
+            GET /api/bulletins/member/64a7b8c9d1234567890abcde
+            Authorization: Bearer {jwt-token}
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.MemberBulletinController.CreateMemberBulletin(SeniorLearnApi.DTOs.Requests.CreateMemberBulletinRequest)">
+            <summary>
+            Creates a new member bulletin
+            </summary>
+            <param name="request">Bulletin details including title, content, and category (Interests, Events, or Updates)</param>
+            <returns>The newly created bulletin with complete details and generated ID</returns>
+            <response code="201">Bulletin successfully created</response>
+            <response code="400">Invalid request data or validation errors</response>
+            <response code="401">User not authenticated or unable to identify current user</response>
+            <example>
+            POST /api/bulletins/member
+            Authorization: Bearer {jwt-token}
+            {
+              "title": "Weekly Bridge Club Meeting",
+              "content": "Join us every Wednesday at 2 PM in the community center for our weekly bridge games. All skill levels welcome!",
+              "category": "Event"
+            }
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.MemberBulletinController.UpdateMemberBulletin(System.String,SeniorLearnApi.DTOs.Requests.UpdateMemberBulletinRequest)">
+            <summary>
+            Updates an existing member bulletin
+            </summary>
+            <param name="id">The unique identifier of the bulletin to update</param>
+            <param name="request">Updated bulletin details including title, content, and category</param>
+            <returns>The updated bulletin with new information and updated timestamp</returns>
+            <response code="200">Bulletin successfully updated</response>
+            <response code="400">Invalid request data</response>
+            <response code="401">User not authenticated</response>
+            <response code="404">Bulletin not found or user doesn't have permission to update it</response>
+            <remarks>
+            Members can only update their own bulletins. Administrators can update any member bulletin for moderation purposes.
+            </remarks>
+            <example>
+            PUT /api/bulletins/member/64a7b8c9d1234567890abcde
+            Authorization: Bearer {jwt-token}
+            {
+              "title": "Updated: Weekly Bridge Club Meeting",
+              "content": "Join us every Wednesday at 3 PM (time changed!) in the community center for our weekly bridge games.",
+              "category": "Event"
+            }
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.MemberBulletinController.DeleteMemberBulletin(System.String)">
+            <summary>
+            Deletes a member bulletin
+            </summary>
+            <param name="id">The unique identifier of the bulletin to delete</param>
+            <returns>No content on successful deletion</returns>
+            <response code="204">Bulletin successfully deleted</response>
+            <response code="401">User not authenticated</response>
+            <response code="404">Bulletin not found or user doesn't have permission to delete it</response>
+            <remarks>
+            Members can only delete their own bulletins. Administrators can delete any member bulletin for moderation purposes.
+            </remarks>
+            <example>
+            DELETE /api/bulletins/member/64a7b8c9d1234567890abcde
+            Authorization: Bearer {jwt-token}
+            </example>
+        </member>
+        <member name="T:SeniorLearnApi.Controllers.OfficialBulletinController">
+            <summary>
+            Manages official SeniorLearn bulletins created by administrators
+            </summary>
+            <remarks>
+            Provides access to official bulletins for all users (including anonymous), but restricts creation, 
+            modification, and deletion to administrators only. Official bulletins contain important announcements
+            and information from the SeniorLearn organization.
+            </remarks>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.OfficialBulletinController.GetAllOfficialBulletins">
+            <summary>
+            Retrieves all official bulletins
+            </summary>
+            <returns>List of all official bulletins sorted by creation date (newest first)</returns>
+            <response code="200">Bulletins successfully retrieved</response>
+            <remarks>
+            This endpoint is accessible to anonymous users, allowing everyone to view official SeniorLearn announcements
+            without requiring authentication.
+            </remarks>
+            <example>
+            GET /api/bulletins/official
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.OfficialBulletinController.GetOfficialBulletinById(System.String)">
+            <summary>
+            Retrieves a specific official bulletin by its ID
+            </summary>
+            <param name="id">The unique identifier of the official bulletin</param>
+            <returns>Complete official bulletin details including title, content, author, and timestamps</returns>
+            <response code="200">Bulletin successfully retrieved</response>
+            <response code="404">Bulletin not found or invalid ID format</response>
+            <remarks>
+            This endpoint is accessible to anonymous users, allowing everyone to read full official bulletin content
+            without authentication requirements.
+            </remarks>
+            <example>
+            GET /api/bulletins/official/64a7b8c9d1234567890abcde
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.OfficialBulletinController.CreateOfficialBulletin(SeniorLearnApi.DTOs.Requests.CreateOfficialBulletinRequest)">
+            <summary>
+            Creates a new official bulletin
+            </summary>
+            <param name="request">Bulletin details including title and content</param>
+            <returns>The newly created official bulletin with complete details and generated ID</returns>
+            <response code="201">Bulletin successfully created</response>
+            <response code="400">Invalid request data or validation errors</response>
+            <response code="401">User not authenticated or not authorized</response>
+            <response code="403">User does not have administrator privileges</response>
+            <remarks>
+            This endpoint requires administrator authentication. Only users with the "Administrator" role
+            can create official bulletins.
+            </remarks>
+            <example>
+            POST /api/bulletins/official
+            Authorization: Bearer {jwt-token}
+            {
+              "title": "Important: New Community Guidelines",
+              "content": "We are implementing new community guidelines effective next month. Please review the attached document for details..."
+            }
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.OfficialBulletinController.UpdateOfficialBulletin(System.String,SeniorLearnApi.DTOs.Requests.UpdateOfficialBulletinRequest)">
+            <summary>
+            Updates an existing official bulletin
+            </summary>
+            <param name="id">The unique identifier of the bulletin to update</param>
+            <param name="request">Updated bulletin details including title and content</param>
+            <returns>The updated bulletin with new information and updated timestamp</returns>
+            <response code="200">Bulletin successfully updated</response>
+            <response code="400">Invalid request data</response>
+            <response code="401">User not authenticated or not authorized</response>
+            <response code="403">User does not have administrator privileges</response>
+            <response code="404">Bulletin not found</response>
+            <remarks>
+            This endpoint requires administrator authentication. Only users with the "Administrator" role
+            can update official bulletins.
+            </remarks>
+            <example>
+            PUT /api/bulletins/official/64a7b8c9d1234567890abcde
+            Authorization: Bearer {jwt-token}
+            {
+              "title": "Updated: New Community Guidelines",
+              "content": "We are implementing updated community guidelines effective next month. The implementation date has been moved to accommodate feedback..."
+            }
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.OfficialBulletinController.DeleteOfficialBulletin(System.String)">
+            <summary>
+            Deletes an official bulletin
+            </summary>
+            <param name="id">The unique identifier of the bulletin to delete</param>
+            <returns>No content on successful deletion</returns>
+            <response code="204">Bulletin successfully deleted</response>
+            <response code="401">User not authenticated or not authorized</response>
+            <response code="403">User does not have administrator privileges</response>
+            <response code="404">Bulletin not found</response>
+            <remarks>
+            This endpoint requires administrator authentication. Only users with the "Administrator" role
+            can delete official bulletins.
+            </remarks>
+            <example>
+            DELETE /api/bulletins/official/64a7b8c9d1234567890abcde
+            Authorization: Bearer {jwt-token}
+            </example>
+        </member>
+        <member name="T:SeniorLearnApi.Controllers.UserProfileController">
+            <summary>
+            Manages user profile information and settings for authenticated members
+            </summary>
+            <remarks>
+            Provides endpoints for viewing and updating user profiles, including personal information,
+            membership details, user bulletins, and preference settings like font size, dark mode, and notifications.
+            All endpoints require authentication.
+            </remarks>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.UserProfileController.GetProfile">
+            <summary>
+            Retrieves the current user's profile information
+            </summary>
+            <returns>Complete user profile including personal details, membership date, and list of user's bulletins</returns>
+            <response code="200">Profile successfully retrieved</response>
+            <response code="401">User not authenticated</response>
+            <response code="404">User profile not found</response>
+            <example>
+            GET /api/profile
+            Authorization: Bearer {jwt-token}
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.UserProfileController.UpdateProfile(SeniorLearnApi.DTOs.Requests.UpdateProfileRequest)">
+            <summary>
+            Updates the current user's profile information
+            </summary>
+            <param name="request">Updated profile information including first name, last name, and email</param>
+            <returns>Updated user profile with the new information</returns>
+            <response code="200">Profile successfully updated</response>
+            <response code="400">Invalid request data</response>
+            <response code="401">User not authenticated</response>
+            <response code="404">User profile not found</response>
+            <example>
+            PUT /api/profile
+            Authorization: Bearer {jwt-token}
+            {
+              "firstName": "John",
+              "lastName": "Smith",
+              "email": "john.smith@newemail.com"
+            }
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.UserProfileController.GetSettings">
+            <summary>
+            Retrieves the current user's preference settings
+            </summary>
+            <returns>User settings including font size, dark mode, and notification preferences</returns>
+            <response code="200">Settings successfully retrieved</response>
+            <response code="401">User not authenticated</response>
+            <response code="404">User settings not found</response>
+            <example>
+            GET /api/profile/settings
+            Authorization: Bearer {jwt-token}
+            </example>
+        </member>
+        <member name="M:SeniorLearnApi.Controllers.UserProfileController.UpdateSettings(SeniorLearnApi.DTOs.Requests.UpdateSettingsRequest)">
+            <summary>
+            Updates the current user's preference settings
+            </summary>
+            <param name="request">Updated settings including font size, dark mode preference, and notification settings</param>
+            <returns>Updated user settings with the new preferences</returns>
+            <response code="200">Settings successfully updated</response>
+            <response code="400">Invalid request data</response>
+            <response code="401">User not authenticated</response>
+            <response code="404">User settings not found</response>
+            <example>
+            PUT /api/profile/settings
+            Authorization: Bearer {jwt-token}
+            {
+              "fontSize": 36,
+              "darkMode": true,
+              "enableNotifications": false
+            }
+            </example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Requests.CreateMemberBulletinRequest">
+            <summary>
+            Request model for creating a new member bulletin in the SeniorLearn bulletin system
+            </summary>
+            <remarks>
+            Member bulletins are user-generated content that can be categorized as Interests, Events, or Updates.
+            All authenticated members can create bulletins to share information with the community.
+            </remarks>
+            <example>
+            {
+              "title": "Weekly Bridge Club Meeting",
+              "content": "Join us every Wednesday at 2 PM in the community center for bridge games. All skill levels welcome!",
+              "category": "Event"
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.CreateMemberBulletinRequest.Title">
+            <summary>
+            The title of the member bulletin
+            </summary>
+            <value>A descriptive title that summarizes the bulletin content</value>
+            <example>Weekly Bridge Club Meeting</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.CreateMemberBulletinRequest.Content">
+            <summary>
+            The main content body of the member bulletin
+            </summary>
+            <value>Detailed information about the bulletin topic</value>
+            <example>Join us every Wednesday at 2 PM in the community center for bridge games. All skill levels welcome!</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.CreateMemberBulletinRequest.Category">
+            <summary>
+            The category classification for the member bulletin
+            </summary>
+            <value>Must be one of: Interest, Event, or Update to help users filter and browse relevant content</value>
+            <example>Event</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Requests.CreateOfficialBulletinRequest">
+            <summary>
+            Request model for creating a new official SeniorLearn bulletin
+            </summary>
+            <remarks>
+            Official bulletins are administrative announcements and important information from the SeniorLearn organization.
+            Only users with Administrator role can create official bulletins. These are visible to all users including anonymous visitors.
+            </remarks>
+            <example>
+            {
+              "title": "New Community Guidelines",
+              "content": "We are implementing new community guidelines effective next month."
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.CreateOfficialBulletinRequest.Title">
+            <summary>
+            The title of the official bulletin
+            </summary>
+            <value>A clear, authoritative title for official announcements</value>
+            <example>New Community Guidelines</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.CreateOfficialBulletinRequest.Content">
+            <summary>
+            The main content body of the official bulletin
+            </summary>
+            <value>Comprehensive information about official announcements, policies, or important updates</value>
+            <example>We are implementing new community guidelines effective next month.</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Requests.RefreshTokenRequest">
+            <summary>
+            Request model for refreshing an expired JWT access token
+            </summary>
+            <remarks>
+            Used in the JWT authentication flow to obtain a new access token when the current one expires.
+            The refresh token must be valid and not expired to successfully generate new tokens.
+            </remarks>
+            <example>
+            {
+              "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NGE3YjhjOWQxMjM0NTY3ODkwYWJjZGUi..."
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.RefreshTokenRequest.RefreshToken">
+            <summary>
+            The refresh token used to generate a new access token
+            </summary>
+            <value>A valid JWT refresh token that was previously issued during authentication</value>
+            <example>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NGE3YjhjOWQxMjM0NTY3ODkwYWJjZGUi...</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Requests.RegisterRequest">
+            <summary>
+            Request model for user registration in the SeniorLearn system
+            </summary>
+            <remarks>
+            Creates a new user account with Member role by default. All fields are required for successful registration.
+            Username and email must be unique across the system. Password must meet security requirements.
+            </remarks>
+            <example>
+            {
+              "username": "johnsmith",
+              "password": "SecurePassword123!",
+              "firstName": "John",
+              "lastName": "Smith",
+              "email": "john.smith@email.com"
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.RegisterRequest.Username">
+            <summary>
+            Unique username for the new user account
+            </summary>
+            <value>Must be unique across the system, recommended 3-30 characters, alphanumeric and underscore allowed</value>
+            <example>johnsmith</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.RegisterRequest.Password">
+            <summary>
+            Password for the new user account
+            </summary>
+            <value>Must be 6-100 characters long and meet security requirements including special characters</value>
+            <example>SecurePassword123!</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.RegisterRequest.FirstName">
+            <summary>
+            User's first name
+            </summary>
+            <value>Personal first name used for display purposes and profile information</value>
+            <example>John</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.RegisterRequest.LastName">
+            <summary>
+            User's last name
+            </summary>
+            <value>Personal last name used for display purposes and profile information</value>
+            <example>Smith</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.RegisterRequest.Email">
+            <summary>
+            User's email address
+            </summary>
+            <value>Must be unique across the system and follow valid email format</value>
+            <example>john.smith@email.com</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Requests.SignInRequest">
+            <summary>
+            Request model for user authentication (sign in)
+            </summary>
+            <remarks>
+            Used to authenticate existing users and obtain JWT tokens for API access.
+            Credentials are validated against stored user information.
+            </remarks>
+            <example>
+            {
+              "username": "johnsmith",
+              "password": "SecurePassword123!"
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.SignInRequest.Username">
+            <summary>
+            Username for authentication
+            </summary>
+            <value>Must match an existing user account in the system</value>
+            <example>johnsmith</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.SignInRequest.Password">
+            <summary>
+            Password for authentication
+            </summary>
+            <value>Must match the password associated with the specified username</value>
+            <example>SecurePassword123!</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Requests.SignOutRequest">
+            <summary>
+            Request model for user sign out (token revocation)
+            </summary>
+            <remarks>
+            Revokes the specified refresh token to complete the sign-out process and prevent further token refreshing.
+            The refresh token must belong to the currently authenticated user.
+            </remarks>
+            <example>
+            {
+              "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NGE3YjhjOWQxMjM0NTY3ODkwYWJjZGUi..."
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.SignOutRequest.RefreshToken">
+            <summary>
+            The refresh token to revoke during sign out
+            </summary>
+            <value>Must be a valid refresh token belonging to the current user</value>
+            <example>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NGE3YjhjOWQxMjM0NTY3ODkwYWJjZGUi...</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Requests.UpdateMemberBulletinRequest">
+            <summary>
+            Request model for updating an existing member bulletin
+            </summary>
+            <remarks>
+            Allows members to modify their own bulletins or administrators to moderate any member bulletin.
+            All fields are required and will replace the existing bulletin content completely.
+            </remarks>
+            <example>
+            {
+              "title": "Updated: Weekly Bridge Club Meeting",
+              "content": "Join us every Wednesday at 3 PM (time changed!) in the community center for bridge games.",
+              "category": "Event"
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.UpdateMemberBulletinRequest.Title">
+            <summary>
+            Updated title for the member bulletin
+            </summary>
+            <value>New title that will replace the existing bulletin title</value>
+            <example>Updated: Weekly Bridge Club Meeting</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.UpdateMemberBulletinRequest.Content">
+            <summary>
+            Updated content for the member bulletin
+            </summary>
+            <value>New content that will replace the existing bulletin content</value>
+            <example>Join us every Wednesday at 3 PM (time changed!) in the community center for bridge games.</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.UpdateMemberBulletinRequest.Category">
+            <summary>
+            Updated category for the member bulletin
+            </summary>
+            <value>New category classification that will replace the existing category</value>
+            <example>Event</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Requests.UpdateOfficialBulletinRequest">
+            <summary>
+            Request model for updating an existing official bulletin
+            </summary>
+            <remarks>
+            Only users with Administrator role can update official bulletins.
+            All fields are required and will replace the existing bulletin content completely.
+            </remarks>
+            <example>
+            {
+              "title": "Updated: New Community Guidelines",
+              "content": "We are implementing updated community guidelines effective next month. The implementation date has been moved to accommodate feedback."
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.UpdateOfficialBulletinRequest.Title">
+            <summary>
+            Updated title for the official bulletin
+            </summary>
+            <value>New title that will replace the existing official bulletin title</value>
+            <example>Updated: New Community Guidelines</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.UpdateOfficialBulletinRequest.Content">
+            <summary>
+            Updated content for the official bulletin
+            </summary>
+            <value>New content that will replace the existing official bulletin content</value>
+            <example>We are implementing updated community guidelines effective next month. The implementation date has been moved to accommodate feedback.</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Requests.UpdateProfileRequest">
+            <summary>
+            Request model for updating user profile information
+            </summary>
+            <remarks>
+            Allows authenticated users to modify their personal information including name and email address.
+            Email must remain unique across the system. Username cannot be changed after registration.
+            </remarks>
+            <example>
+            {
+              "firstName": "John",
+              "lastName": "Smith",
+              "email": "john.smith@newemail.com"
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.UpdateProfileRequest.FirstName">
+            <summary>
+            Updated first name for the user profile
+            </summary>
+            <value>New first name that will replace the existing profile first name</value>
+            <example>John</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.UpdateProfileRequest.LastName">
+            <summary>
+            Updated last name for the user profile
+            </summary>
+            <value>New last name that will replace the existing profile last name</value>
+            <example>Smith</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.UpdateProfileRequest.Email">
+            <summary>
+            Updated email address for the user profile
+            </summary>
+            <value>New email address that must be unique across the system and follow valid email format</value>
+            <example>john.smith@newemail.com</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Requests.UpdateSettingsRequest">
+            <summary>
+            Request model for updating user preference settings
+            </summary>
+            <remarks>
+            Allows users to customize their application experience including accessibility preferences,
+            visual themes, and notification settings. These settings affect how the mobile app displays content.
+            </remarks>
+            <example>
+            {
+              "fontSize": 36,
+              "darkMode": true,
+              "enableNotifications": false
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.UpdateSettingsRequest.FontSize">
+            <summary>
+            Font size preference for text display
+            </summary>
+            <value>Font size in points for accessibility</value>
+            <example>36</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.UpdateSettingsRequest.DarkMode">
+            <summary>
+            Dark mode preference for the user interface
+            </summary>
+            <value>True to enable dark mode theme, false for light mode theme</value>
+            <example>true</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Requests.UpdateSettingsRequest.EnableNotifications">
+            <summary>
+            Notification preference setting
+            </summary>
+            <value>True to enable push notifications, false to disable all notifications</value>
+            <example>false</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Responses.ApiResponse`1">
+            <summary>
+            Generic wrapper for all API responses in the SeniorLearn system
+            </summary>
+            <typeparam name="T">The type of data being returned in the response</typeparam>
+            <remarks>
+            Provides a consistent response format across all API endpoints with success status,
+            optional message, and data payload. Used for both successful responses and error responses.
+            </remarks>
+            <example>
+            Success Response:
+            {
+              "success": true,
+              "message": "Operation completed successfully",
+              "data": { ... }
+            }
+            
+            Error Response:
+            {
+              "success": false,
+              "message": "Validation failed",
+              "data": null
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.ApiResponse`1.Success">
+            <summary>
+            Indicates whether the API operation was successful
+            </summary>
+            <value>True if the operation completed successfully, false if an error occurred</value>
+            <example>true</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.ApiResponse`1.Message">
+            <summary>
+            Optional message providing additional information about the response
+            </summary>
+            <value>Human-readable message describing the result or error details</value>
+            <example>Operation completed successfully</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.ApiResponse`1.Data">
+            <summary>
+            The actual data payload returned by the API
+            </summary>
+            <value>Strongly-typed data object, null in case of errors</value>
+        </member>
+        <member name="M:SeniorLearnApi.DTOs.Responses.ApiResponse`1.SuccessResponse(`0,System.String)">
+            <summary>
+            Creates a successful API response with data and optional message
+            </summary>
+            <param name="data">The data to include in the response</param>
+            <param name="message">Optional success message</param>
+            <returns>ApiResponse indicating success with the provided data</returns>
+        </member>
+        <member name="M:SeniorLearnApi.DTOs.Responses.ApiResponse`1.ErrorResponse(System.String)">
+            <summary>
+            Creates an error API response with error message and no data
+            </summary>
+            <param name="message">Error message describing what went wrong</param>
+            <returns>ApiResponse indicating failure with the error message</returns>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Responses.AuthResponse">
+            <summary>
+            Response model containing JWT authentication tokens and user role information
+            </summary>
+            <remarks>
+            Returned after successful authentication (sign-in) or registration. Contains all necessary
+            tokens for accessing protected endpoints and information about token expiration.
+            </remarks>
+            <example>
+            {
+              "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+              "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+              "expiresIn": 3600,
+              "role": "Member"
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.AuthResponse.AccessToken">
+            <summary>
+            JWT access token for authenticating API requests
+            </summary>
+            <value>Bearer token to be included in Authorization header for protected endpoints</value>
+            <example>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NGE3YjhjOWQxMjM0NTY3ODkwYWJjZGUi...</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.AuthResponse.RefreshToken">
+            <summary>
+            JWT refresh token for obtaining new access tokens
+            </summary>
+            <value>Long-lived token used to refresh expired access tokens without re-authentication</value>
+            <example>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NGE3YjhjOWQxMjM0NTY3ODkwYWJjZGUi...</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.AuthResponse.ExpiresIn">
+            <summary>
+            Access token expiration time in seconds
+            </summary>
+            <value>Number of seconds until the access token expires, typically 3600 (1 hour)</value>
+            <example>3600</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.AuthResponse.Role">
+            <summary>
+            User's role in the SeniorLearn system
+            </summary>
+            <value>Either "Member" for regular users or "Administrator" for admin users</value>
+            <example>Member</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Responses.BulletinDetailResponseBase">
+            <summary>
+            Base class for bulletin detail responses (full view)
+            </summary>
+            <remarks>
+            Used for individual bulletin retrieval where complete information is required.
+            Includes full content in addition to all common bulletin properties.
+            </remarks>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.BulletinDetailResponseBase.Content">
+            <summary>
+            Full content body of the bulletin
+            </summary>
+            <value>Complete text content of the bulletin</value>
+            <example>Join us every Wednesday at 2 PM in the community center for our weekly bridge games. All skill levels welcome! We provide cards and refreshments.</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Responses.BulletinListItemResponseBase">
+            <summary>
+            Base class for bulletin list item responses (summary view)
+            </summary>
+            <remarks>
+            Used for bulletin listing endpoints where full content is not needed. Inherits all
+            common bulletin properties but excludes detailed content to optimize response size.
+            </remarks>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Responses.BulletinResponseBase">
+            <summary>
+            Base class for all bulletin response DTOs containing common properties
+            </summary>
+            <remarks>
+            Provides shared properties for both official and member bulletins including identification,
+            authorship information, and timestamp metadata. This ensures consistency across bulletin types.
+            </remarks>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.BulletinResponseBase.Id">
+            <summary>
+            Unique identifier for the bulletin
+            </summary>
+            <value>MongoDB ObjectId as string, used for all bulletin operations</value>
+            <example>64a7b8c9d1234567890abcde</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.BulletinResponseBase.Title">
+            <summary>
+            Title of the bulletin
+            </summary>
+            <value>Descriptive title summarizing the bulletin content</value>
+            <example>Weekly Bridge Club Meeting</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.BulletinResponseBase.CreatedById">
+            <summary>
+            User ID of the bulletin creator
+            </summary>
+            <value>MongoDB ObjectId of the user who created this bulletin</value>
+            <example>64a7b8c9d1234567890abcdf</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.BulletinResponseBase.CreatedByUsername">
+            <summary>
+            Username of the bulletin creator
+            </summary>
+            <value>Display name of the user who created this bulletin</value>
+            <example>johnsmith</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.BulletinResponseBase.CreatedAt">
+            <summary>
+            Timestamp when the bulletin was created
+            </summary>
+            <value>UTC datetime indicating when the bulletin was first created</value>
+            <example>2024-06-13T10:30:00Z</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.BulletinResponseBase.UpdatedAt">
+            <summary>
+            Timestamp when the bulletin was last updated
+            </summary>
+            <value>UTC datetime indicating the last modification, null if never updated</value>
+            <example>2024-06-13T15:45:00Z</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Responses.MemberBulletinDetailResponse">
+            <summary>
+            Response model for detailed member bulletin information
+            </summary>
+            <remarks>
+            Used when retrieving a specific member bulletin by ID, providing complete information
+            including full content and category for display and editing purposes.
+            </remarks>
+            <example>
+            {
+              "id": "64a7b8c9d1234567890abcde",
+              "title": "Weekly Bridge Club Meeting",
+              "content": "Join us every Wednesday at 2 PM in the community center...",
+              "createdById": "64a7b8c9d1234567890abcdf",
+              "createdByUsername": "johnsmith",
+              "createdAt": "2024-06-13T10:30:00Z",
+              "updatedAt": null,
+              "category": "Event"
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.MemberBulletinDetailResponse.Category">
+            <summary>
+            Category classification of the member bulletin
+            </summary>
+            <value>One of Interest, Event, or Update indicating the bulletin's purpose</value>
+            <example>Event</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Responses.MemberBulletinListItemResponse">
+            <summary>
+            Response model for member bulletin list items
+            </summary>
+            <remarks>
+            Used in member bulletin listing endpoints to provide summary information including
+            the bulletin category for filtering and display purposes.
+            </remarks>
+            <example>
+            {
+              "id": "64a7b8c9d1234567890abcde",
+              "title": "Weekly Bridge Club Meeting",
+              "createdById": "64a7b8c9d1234567890abcdf",
+              "createdByUsername": "johnsmith",
+              "createdAt": "2024-06-13T10:30:00Z",
+              "updatedAt": null,
+              "category": "Event"
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.MemberBulletinListItemResponse.Category">
+            <summary>
+            Category classification of the member bulletin
+            </summary>
+            <value>One of Interest, Event, or Update to help users filter relevant content</value>
+            <example>Event</example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Responses.OfficialBulletinDetailResponse">
+            <summary>
+            Response model for detailed official bulletin information
+            </summary>
+            <remarks>
+            Used when retrieving a specific official bulletin by ID, providing complete information
+            including full content. Accessible to all users including anonymous visitors.
+            </remarks>
+            <example>
+            {
+              "id": "64a7b8c9d1234567890abcde",
+              "title": "Important: New Community Guidelines",
+              "content": "We are implementing new community guidelines effective next month...",
+              "createdById": "64a7b8c9d1234567890abcdf",
+              "createdByUsername": "admin",
+              "createdAt": "2024-06-13T10:30:00Z",
+              "updatedAt": "2024-06-13T15:45:00Z"
+            }
+            </example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Responses.OfficialBulletinListItemResponse">
+            <summary>
+            Response model for official bulletin list items
+            </summary>
+            <remarks>
+            Used in official bulletin listing endpoints accessible to all users including anonymous.
+            Provides summary information without full content for efficient browsing.
+            </remarks>
+            <example>
+            {
+              "id": "64a7b8c9d1234567890abcde",
+              "title": "Important: New Community Guidelines",
+              "createdById": "64a7b8c9d1234567890abcdf",
+              "createdByUsername": "admin",
+              "createdAt": "2024-06-13T10:30:00Z",
+              "updatedAt": "2024-06-13T15:45:00Z"
+            }
+            </example>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Responses.ProfileResponse">
+            <summary>
+            Response model containing complete user profile information
+            </summary>
+            <remarks>
+            Returned when retrieving or updating user profile information. Includes personal details,
+            membership information, role, and a list of the user's own member bulletins.
+            </remarks>
+            <example>
+            {
+              "id": "64a7b8c9d1234567890abcde",
+              "username": "johnsmith",
+              "firstName": "John",
+              "lastName": "Smith",
+              "email": "john.smith@email.com",
+              "role": "Member",
+              "membershipDate": "2024-01-15T00:00:00Z",
+              "myBulletins": [...]
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.ProfileResponse.Id">
+            <summary>
+            Unique identifier for the user
+            </summary>
+            <value>MongoDB ObjectId as string, used for all user-related operations</value>
+            <example>64a7b8c9d1234567890abcde</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.ProfileResponse.Username">
+            <summary>
+            User's unique username
+            </summary>
+            <value>Username chosen during registration, cannot be changed</value>
+            <example>johnsmith</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.ProfileResponse.FirstName">
+            <summary>
+            User's first name
+            </summary>
+            <value>Personal first name, can be updated through profile settings</value>
+            <example>John</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.ProfileResponse.LastName">
+            <summary>
+            User's last name
+            </summary>
+            <value>Personal last name, can be updated through profile settings</value>
+            <example>Smith</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.ProfileResponse.Email">
+            <summary>
+            User's email address
+            </summary>
+            <value>Email address, must be unique across the system</value>
+            <example>john.smith@email.com</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.ProfileResponse.Role">
+            <summary>
+            User's role in the SeniorLearn system
+            </summary>
+            <value>Either Member for regular users or Administrator for admin users</value>
+            <example>Member</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.ProfileResponse.MembershipDate">
+            <summary>
+            Date when the user joined SeniorLearn
+            </summary>
+            <value>UTC datetime indicating when the user account was created</value>
+            <example>2024-01-15T00:00:00Z</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.ProfileResponse.MyBulletins">
+            <summary>
+            List of member bulletins created by this user
+            </summary>
+            <value>Collection of bulletin list items showing all bulletins authored by this user</value>
+        </member>
+        <member name="T:SeniorLearnApi.DTOs.Responses.SettingsResponse">
+            <summary>
+            Response model containing user preference settings
+            </summary>
+            <remarks>
+            Returned when retrieving or updating user settings. Contains accessibility and personalization
+            preferences that affect how the mobile application displays content and behaves.
+            </remarks>
+            <example>
+            {
+              "fontSize": 24,
+              "darkMode": false,
+              "enableNotifications": true
+            }
+            </example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.SettingsResponse.FontSize">
+            <summary>
+            User's preferred font size for text display
+            </summary>
+            <value>Font size in points for accessibility needs</value>
+            <example>24</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.SettingsResponse.DarkMode">
+            <summary>
+            User's preference for dark mode theme
+            </summary>
+            <value>True if dark mode is enabled, false for light mode</value>
+            <example>false</example>
+        </member>
+        <member name="P:SeniorLearnApi.DTOs.Responses.SettingsResponse.EnableNotifications">
+            <summary>
+            User's notification preference setting
+            </summary>
+            <value>True if push notifications are enabled, false if disabled</value>
+            <example>true</example>
+        </member>
+    </members>
+</doc>

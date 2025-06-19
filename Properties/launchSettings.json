@@ -12,7 +12,7 @@
 
         "launchBrowser": false,
 
-        "applicationUrl": "http://0.0.0.0:5143",
+        "applicationUrl": "http://0.0.0.0:3001",
 
         "environmentVariables": {
 
@@ -30,7 +30,7 @@
 
         "launchBrowser": false,
 
-        "applicationUrl": "https://localhost:7100;http://0.0.0.0:5143",
+        "applicationUrl": "https://localhost:7100;http://0.0.0.0:3001",
 
         "environmentVariables": {
 
