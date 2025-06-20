@@ -1,5 +1,6 @@
+const DbConnect = require ("appsettings")
 
-db = connect ("mongodb://localhost:9887/SLearnMobApp_db")
+db = connect ("mongodb://localhost:27021/SLearnMobApp_db")
 
 const collections = ["User","MemberBulletin", "OfficialBulletin", "UserSetting"];
 collections.forEach(collection => {

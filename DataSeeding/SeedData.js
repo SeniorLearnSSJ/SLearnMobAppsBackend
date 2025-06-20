@@ -1,7 +1,7 @@
 const bcrypt = require ('bcrypt');
 
 
-db = connect ("mongodb://localhost:9887/SLearnMobApp_db")
+db = connect ("mongodb://localhost:27021/SLearnMobApp_db")
 //ObjectId() for MongoDBShell, JS, and Node.js
 //GenerateNewId() used in C# with MongoDB.Driver
 //GenerateNewId().ToString()
